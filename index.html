@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Heutinck</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f1f8f1;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none;
+        }
+        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
+        header {
+            background: #2e7d32;
+            color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        h1 { font-size: 20px; margin-bottom: 5px; }
+        header p { font-size: 12px; opacity: 0.9; margin: 0; }
+        .lijst-datum {
+            position: absolute;
+            bottom: 10px; right: 15px;
+            font-size: 11px; opacity: 0.85; font-weight: 600;
+        }
+        .lijst-datum.oud { color: #ffcc80; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab {
+            padding: 10px 12px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+        .tab.active { background: #2e7d32; color: white; border-color: #2e7d32; }
+        .tab-settings { flex: 0 0 auto; padding: 10px 14px; font-size: 16px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Upload / instellingen */
+        .upload-section {
+            background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px;
+        }
+        .upload-area { border: 2px dashed #2e7d32; border-radius: 8px; padding: 20px; text-align: center; }
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 6px; font-size: 14px;
+            font-weight: 600; width: 100%; background: #2e7d32; color: white; cursor: pointer;
+        }
+        .btn:active { background: #1b5e20; }
+        .btn-secondary { background: #757575; }
+        input[type="file"] { display: none; }
+
+        /* Zoekbalk */
+        .search-box {
+            width: 100%; padding: 12px; font-size: 16px;
+            border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px;
+        }
+
+        /* Voorraadtabel */
+        .products-table {
+            background: white; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .products-table table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        .products-table th {
+            background: #2e7d32; color: white; padding: 10px 8px;
+            text-align: left; font-weight: 600; position: sticky; top: 0;
+        }
+        .products-table td { padding: 8px 8px; border-bottom: 1px solid #eee; }
+        .products-table tr:hover { background: #f1f8f1; }
+        .products-table tr { cursor: pointer; }
+
+        /* Notities */
+        .note-item {
+            background: #f9f9f9; padding: 12px; border-radius: 6px;
+            margin-bottom: 10px; border-left: 4px solid #2e7d32;
+        }
+        .note-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 6px;
+        }
+        .note-plant { font-weight: 600; color: #1b5e20; font-size: 14px; flex: 1; }
+        .note-details { font-size: 12px; color: #666; line-height: 1.5; }
+        .btn-delete {
+            background: #d32f2f; color: white; border: none;
+            padding: 6px 12px; border-radius: 4px; font-size: 12px;
+            font-weight: 600; cursor: pointer;
+        }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white; margin: 10% auto;
+            padding: 20px; border-radius: 12px; width: 90%; max-width: 400px;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee;
+        }
+        .modal-header h3 { margin: 0; color: #1b5e20; font-size: 16px; }
+        .close-modal { font-size: 24px; font-weight: bold; color: #999; cursor: pointer; border: none; background: none; }
+        .modal-field { margin-bottom: 12px; }
+        .modal-field label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+        .modal-field input, .modal-field textarea {
+            width: 100%; padding: 10px; border: 2px solid #ddd;
+            border-radius: 6px; font-size: 14px;
+        }
+        .modal-footer { display: flex; gap: 10px; margin-top: 15px; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+
+        /* ── Historie (tracker) tab ── */
+        #historie-tab {
+            /* Volledig scherm binnen tab, donker thema */
+            background: #0a130a;
+            position: fixed;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+        #historie-tab.active { display: flex; }
+
+        /* Historie header */
+        .hist-hdr {
+            background: #101c10;
+            border-bottom: 1px solid #2d5a2d;
+            padding: 14px 18px;
+            display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .hist-hdr-title {
+            font-size: 14px; font-weight: 600; color: #90ee90; flex: 1;
+        }
+        .hist-hdr-sub { font-size: 10px; color: #5a9a5a; }
+
+        /* Zoek in historie */
+        .hist-zoek-wrap {
+            padding: 10px 18px;
+            border-bottom: 1px solid #1e3a1e;
+            background: #101c10;
+            flex-shrink: 0;
+            position: relative;
+        }
+        #hist-zoek-input {
+            width: 100%; padding: 10px 10px 10px 38px;
+            background: #152415; border: 1.5px solid #2d5a2d;
+            border-radius: 10px; color: #90ee90;
+            font-size: 15px; outline: none;
+        }
+        #hist-zoek-input::placeholder { color: #5a9a5a; opacity: .8; }
+        .hist-zoek-icon {
+            position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+            color: #5a9a5a; font-size: 16px; pointer-events: none;
+        }
+
+        /* Genus lijst */
+        #hist-genus-list {
+            flex: 1; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        .genus-item {
+            display: flex; align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #1e3a1e;
+            cursor: pointer;
+            gap: 12px; min-height: 58px;
+        }
+        .genus-item:active { background: #152415; }
+        .genus-name { font-size: 17px; font-weight: 500; color: #c8e8c8; flex: 1; }
+        .genus-count { font-size: 11px; color: #5a9a5a; white-space: nowrap; font-family: monospace; }
+        .genus-chevron { color: #2d5a2d; font-size: 14px; }
+        .genus-dots { display: flex; gap: 3px; align-items: center; }
+        .gdot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+        .hist-hint { padding: 8px 20px; font-size: 11px; color: #5a9a5a; flex-shrink: 0; background: #0a130a; }
+
+        /* Geen data */
+        #hist-geen-data {
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            flex: 1; gap: 12px; padding: 40px 30px;
+        }
+        #hist-geen-data.show { display: flex; }
+        #hist-geen-data .gd-icon { font-size: 40px; }
+        #hist-geen-data p { text-align: center; color: #5a9a5a; font-size: 14px; line-height: 1.5; }
+
+        /* Detail scherm (slide-in over historie) */
+        #hist-detail {
+            position: fixed; inset: 0;
+            background: #0a130a;
+            display: flex; flex-direction: column;
+            z-index: 20;
+            transform: translateX(100%);
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+        }
+        #hist-detail.open { transform: translateX(0); }
+
+        .detail-hdr {
+            background: #101c10;
+            border-bottom: 1px solid #2d5a2d;
+            padding: 14px 18px;
+            display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .detail-hdr-back {
+            background: none; border: none; color: #5a9a5a;
+            font-size: 24px; cursor: pointer; line-height: 1; flex-shrink: 0;
+        }
+        .detail-hdr-title { font-size: 14px; font-weight: 600; color: #90ee90; flex: 1; }
+        .detail-hdr-sub { font-size: 10px; color: #5a9a5a; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Knop: notitie toevoegen vanuit detail */
+        .detail-add-note-btn {
+            background: #1e3a1e; border: 1px solid #2d5a2d; color: #90ee90;
+            border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        }
+        .detail-add-note-btn:active { background: #2d5a2d; }
+
+        .yr-tabs {
+            display: flex; gap: 4px; padding: 8px 18px;
+            border-bottom: 1px solid #1e3a1e; background: #101c10;
+            flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+        }
+        .yr-tabs::-webkit-scrollbar { display: none; }
+        .yr-tab {
+            padding: 6px 14px; border-radius: 8px;
+            border: 1.5px solid #2d5a2d;
+            background: transparent; color: #5a9a5a;
+            font-size: 12px; font-weight: 600; font-family: monospace;
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        }
+        .yr-tab.active { background: #2d5a2d; color: #fff; }
+
+        .detail-search-wrap {
+            padding: 10px 18px; border-bottom: 1px solid #1e3a1e; flex-shrink: 0;
+        }
+        #detail-zoek {
+            width: 100%; padding: 10px 14px;
+            background: #152415; border: 1px solid #1e3a1e;
+            border-radius: 10px; color: #90ee90; font-size: 15px; outline: none;
+        }
+        #detail-zoek::placeholder { color: #5a9a5a; opacity: .7; }
+
+        .legend-strip {
+            display: flex; gap: 8px; align-items: center;
+            padding: 6px 18px; border-bottom: 1px solid #1e3a1e;
+            background: #101c10; flex-shrink: 0; flex-wrap: wrap;
+        }
+        .ls-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #5a9a5a; }
+        .ls-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+        .week-hdr {
+            display: flex; align-items: center;
+            padding: 6px 18px; border-bottom: 1px solid #2d5a2d;
+            background: #101c10; flex-shrink: 0;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .week-hdr::-webkit-scrollbar { display: none; }
+        .wh-plant { font-size: 10px; color: #5a9a5a; min-width: 160px; flex-shrink: 0; font-family: monospace; }
+        .wh-weeks { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+        .wh-weeks::-webkit-scrollbar { display: none; }
+        .wh-wk { min-width: 38px; text-align: center; font-size: 9px; color: #5a9a5a; line-height: 1.3; flex-shrink: 0; font-family: monospace; }
+        .wh-wk .wh-mo { font-size: 8px; color: #3a6a3a; }
+
+        #plant-list {
+            flex: 1; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        .plant-row {
+            display: flex; align-items: center;
+            border-bottom: 1px solid #1e3a1e; min-height: 52px;
+        }
+        .plant-row:nth-child(even) { background: #101c10; }
+        .plant-nm {
+            min-width: 160px; max-width: 160px;
+            padding: 8px 10px 8px 18px;
+            font-size: 13px; color: #c8e8c8;
+            line-height: 1.3; flex-shrink: 0; word-break: break-word;
+        }
+        .plant-nm .genus-part { color: #5a9a5a; font-size: 11px; }
+        .plant-weeks {
+            display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+            padding: 6px 4px; align-items: center;
+        }
+        .plant-weeks::-webkit-scrollbar { display: none; }
+        .wk-dot {
+            min-width: 38px; height: 38px; border-radius: 6px;
+            border: 1px solid rgba(0,0,0,.3); flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform .1s; position: relative;
+        }
+        .wk-dot:active { transform: scale(.92); }
+        .wk-dot.empty { background: transparent; border-color: #1e3a1e; }
+        .wk-dot .qty-label {
+            font-size: 9px; color: rgba(0,0,0,.7); font-weight: 500;
+            pointer-events: none; text-align: center; line-height: 1; padding: 0 2px;
+            font-family: monospace;
+        }
+        .wk-dot.empty .qty-label { display: none; }
+        .geen-planten { padding: 40px 20px; text-align: center; color: #5a9a5a; font-size: 14px; }
+
+        /* Toast (tracker stijl) */
+        #tracker-toast {
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #101c10; border: 1.5px solid #2d5a2d;
+            border-radius: 14px; padding: 12px 18px;
+            min-width: 200px; max-width: 85vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,.7);
+            z-index: 999; opacity: 0; transition: opacity .2s, transform .2s;
+            pointer-events: none; text-align: center;
+        }
+        #tracker-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .t-week { font-size: 10px; color: #5a9a5a; margin-bottom: 4px; font-family: monospace; }
+        .t-name { font-size: 15px; font-weight: 600; color: #90ee90; margin-bottom: 6px; }
+        .t-qty  { font-size: 22px; font-weight: 700; color: #90ee90; margin-bottom: 2px; }
+        .t-unit { font-size: 11px; color: #5a9a5a; }
+        .t-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+        .t-actions { margin-top: 8px; }
+        .t-note-btn {
+            background: #1e3a1e; border: 1px solid #2d5a2d; color: #90ee90;
+            border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+            cursor: pointer;
+        }
+        .t-note-btn:active { background: #2d5a2d; }
+
+        /* Toast (index stijl - bovenin) */
+        #simple-toast {
+            display: none; position: fixed; top: 10px; left: 50%;
+            transform: translateX(-50%);
+            background: #2e7d32; color: white; padding: 10px 20px;
+            border-radius: 8px; z-index: 9999; font-size: 14px;
+        }
+
+        /* Dialogen */
+        .dialog-overlay {
+            display: none; position: fixed; z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .dialog-box {
+            background: white; margin: 30% auto; padding: 24px;
+            border-radius: 12px; width: 88%; max-width: 360px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        /* Import dialoog */
+        #import-dialog { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        #import-dialog .idlg {
+            background: white; margin: 8% auto; padding: 24px;
+            border-radius: 12px; width: 90%; max-width: 420px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            max-height: 80vh; display: flex; flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="main-container">
+    <header>
+        <h1>🌿 Heutinck</h1>
+        <p>Mobiele versie · <span id="product-count-header"></span></p>
+        <div class="lijst-datum" id="lijst-datum"></div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-voorraad" onclick="switchTab('voorraad',this)">Voorraad</button>
+        <button class="tab" id="tab-historie" onclick="switchTab('historie',this)">Historie <span id="hist-week-label"></span></button>
+        <button class="tab" id="tab-notities" onclick="switchTab('notities',this)">Notities <span id="notes-count"></span></button>
+        <button class="tab tab-settings" id="tab-upload" onclick="switchTab('upload',this)">⚙️</button>
+    </div>
+
+    <!-- Voorraad tab -->
+    <div id="voorraad-tab" class="tab-content active">
+        <div style="position:relative;margin-bottom:15px;">
+            <button id="clear-search" onclick="clearSearch()" style="display:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;color:#d32f2f;cursor:pointer;line-height:1;">×</button>
+            <input type="text" class="search-box" id="search-box" placeholder="🔍 Zoek plant..."
+                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                onkeydown="if(event.key==='Enter') event.preventDefault()"
+                oninput="renderProducts(this.value); document.getElementById('clear-search').style.display=this.value?'block':'none'"
+                style="margin-bottom:0;padding-right:16px;padding-left:36px;">
+        </div>
+        <div id="products-table" class="products-table"></div>
+    </div>
+
+    <!-- Notities tab -->
+    <div id="notities-tab" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h2 style="font-size:18px;">Klant Notities</h2>
+            <div style="display:flex;gap:8px;">
+                <button onclick="openNoteModalVrij()" style="background:#2e7d32;color:white;border:none;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;">+ Notitie</button>
+                <button onclick="exportNotities()" style="background:#e8f5e9;color:#2e7d32;border:none;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;">📋</button>
+                <button class="btn-delete" onclick="clearAllNotes()">Leeg</button>
+            </div>
+        </div>
+        <div id="notes-list"></div>
+    </div>
+
+    <!-- Instellingen tab -->
+    <div id="upload-tab" class="tab-content">
+        <div class="upload-section">
+            <h2 style="font-size:16px;margin-bottom:12px;color:#2e7d32;">📤 Voorraadlijst uploaden</h2>
+            <p style="font-size:13px;color:#666;margin-bottom:12px;">Upload een Heutinck Excel-weeklijst (dd-mm-yyyy in bestandsnaam). Wordt ook toegevoegd aan het voorraadverloop.</p>
+            <div class="upload-area">
+                <div style="font-size:36px;margin-bottom:10px;">📁</div>
+                <button class="btn" onclick="document.getElementById('file-input').click()">Excel uploaden (.xlsx)</button>
+                <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+        <div class="upload-section">
+            <h2 style="font-size:16px;margin-bottom:12px;color:#2e7d32;">💾 Backup</h2>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <button onclick="exportBackup()" class="btn">Exporteer backup (json)</button>
+                <button onclick="document.getElementById('import-input').click()" class="btn">Importeer backup (json)</button>
+                <input type="file" id="import-input" accept=".json" style="display:none;" onchange="importBackup(event)">
+            </div>
+        </div>
+        <div class="upload-section">
+            <h2 style="font-size:16px;margin-bottom:12px;color:#2e7d32;">📈 Verloopdata</h2>
+            <p style="font-size:13px;color:#666;margin-bottom:10px;">Importeer losse weeklijsten toe aan het verloop-overzicht (meerdere tegelijk mogelijk).</p>
+            <button class="btn" style="background:#1b5e20;" onclick="document.getElementById('file-xlsx-extra').click()">Extra weeklijsten toevoegen</button>
+            <input type="file" id="file-xlsx-extra" accept=".xlsx" multiple style="display:none;" onchange="importXlsx(this.files); this.value=''">
+        </div>
+    </div>
+</div>
+
+<!-- ── HISTORIE TAB (volledig scherm, donker) ── -->
+<div id="historie-tab" class="tab-content">
+    <!-- Zoekscherm genus -->
+    <div id="hist-screen-zoek" style="display:flex;flex-direction:column;flex:1;height:100%;">
+        <div class="hist-hdr">
+            <div style="flex:1;">
+                <div class="hist-hdr-sub">Heutinck · Voorraad</div>
+                <div class="hist-hdr-title">Historie per week</div>
+            </div>
+        </div>
+        <div class="hist-zoek-wrap">
+            <span class="hist-zoek-icon">🔍</span>
+            <input id="hist-zoek-input" type="search" autocomplete="off" autocorrect="off" spellcheck="false"
+                   placeholder="Aster, Geranium, Hosta…">
+        </div>
+        <div class="hist-hint" id="hist-hint"></div>
+        <div id="hist-genus-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+        <div id="hist-geen-data">
+            <div class="gd-icon">📅</div>
+            <p>Nog geen verloopdata.<br>Upload een weeklijst via ⚙️ Instellingen.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Detail scherm (slide-in) -->
+<div id="hist-detail">
+    <div class="detail-hdr">
+        <button class="detail-hdr-back" id="btn-detail-back">‹</button>
+        <div style="flex:1;">
+            <div class="detail-hdr-sub">Geslacht</div>
+            <div class="detail-hdr-title" id="detail-genus-name">—</div>
+        </div>
+        <button class="detail-add-note-btn" id="btn-add-note-genus" onclick="openNoteFromGenus()">+ Notitie</button>
+    </div>
+    <div class="yr-tabs" id="yr-tabs"></div>
+    <div class="detail-search-wrap">
+        <input id="detail-zoek" type="search" placeholder="Soort / cultivar zoeken…" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="legend-strip">
+        <div class="ls-item"><div class="ls-dot" style="background:#ef4444"></div>&lt;100</div>
+        <div class="ls-item"><div class="ls-dot" style="background:#f97316"></div>100–250</div>
+        <div class="ls-item"><div class="ls-dot" style="background:#facc15"></div>250–500</div>
+        <div class="ls-item"><div class="ls-dot" style="background:#4ade80"></div>500–1k</div>
+        <div class="ls-item"><div class="ls-dot" style="background:#166534"></div>&gt;1k</div>
+        <div class="ls-item" style="margin-left:auto;font-size:10px;color:#5a9a5a;" id="week-range-label"></div>
+    </div>
+    <div class="week-hdr" id="week-hdr">
+        <div class="wh-plant">Plant</div>
+        <div class="wh-weeks" id="wh-weeks"></div>
+    </div>
+    <div id="plant-list"></div>
+</div>
+
+<!-- Tracker toast -->
+<div id="tracker-toast">
+    <div class="t-week" id="t-week"></div>
+    <div class="t-name" id="t-name"></div>
+    <div><span class="t-swatch" id="t-swatch"></span><span class="t-qty" id="t-qty"></span></div>
+    <div class="t-unit">stuks verkoopbaar</div>
+    <div class="t-actions">
+        <button class="t-note-btn" id="t-note-btn">📝 Notitie toevoegen</button>
+    </div>
+</div>
+
+<!-- Simple toast -->
+<div id="simple-toast"></div>
+
+<!-- Bevestigingsdialoog -->
+<div class="dialog-overlay" id="confirm-dialog">
+    <div class="dialog-box">
+        <div id="confirm-icon" style="font-size:36px;text-align:center;margin-bottom:12px;"></div>
+        <p id="confirm-message" style="text-align:center;font-size:16px;font-weight:600;margin-bottom:6px;color:#333;"></p>
+        <p id="confirm-sub" style="text-align:center;font-size:13px;color:#888;margin-bottom:20px;"></p>
+        <div style="display:flex;gap:10px;">
+            <button onclick="closeConfirm(false)" style="flex:1;padding:12px;background:#f1f8f1;color:#555;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Annuleren</button>
+            <button id="confirm-ok" style="flex:1;padding:12px;background:#d32f2f;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Verwijderen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Info dialoog -->
+<div class="dialog-overlay" id="info-dialog">
+    <div class="dialog-box">
+        <div id="info-icon" style="font-size:36px;text-align:center;margin-bottom:12px;"></div>
+        <p id="info-message" style="text-align:center;font-size:15px;font-weight:600;color:#333;margin-bottom:20px;"></p>
+        <button onclick="closeInfo()" style="width:100%;padding:12px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">OK</button>
+    </div>
+</div>
+
+<!-- Import resultaat dialoog -->
+<div id="import-dialog">
+    <div class="idlg">
+        <div style="font-size:32px;text-align:center;margin-bottom:8px;">📊</div>
+        <h3 style="text-align:center;color:#2e7d32;margin-bottom:16px;font-size:17px;">Voorraadlijst geïmporteerd</h3>
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:24px;font-weight:700;color:#2e7d32;" id="import-total"></div>
+                <div style="font-size:11px;color:#666;margin-top:2px;">totaal soorten</div>
+            </div>
+            <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:24px;font-weight:700;color:#2e7d32;" id="import-new-count"></div>
+                <div style="font-size:11px;color:#666;margin-top:2px;">nieuw t.o.v. vorige</div>
+            </div>
+            <div style="flex:1;background:#fff3e0;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:24px;font-weight:700;color:#e65100;" id="import-removed-count"></div>
+                <div style="font-size:11px;color:#666;margin-top:2px;">niet meer in lijst</div>
+            </div>
+        </div>
+        <div id="import-new-list" style="overflow-y:auto;flex:1;margin-bottom:14px;"></div>
+        <button onclick="closeImportDialog()" style="width:100%;padding:12px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Naar voorraadlijst →</button>
+    </div>
+</div>
+
+<!-- Notitie Modal -->
+<div id="note-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-plant-name"></h3>
+            <button class="close-modal" onclick="closeNoteModal()">&times;</button>
+        </div>
+        <div class="modal-field" id="modal-vrije-naam-field" style="display:none;">
+            <label>Plantnaam:</label>
+            <input type="text" id="modal-vrije-naam" placeholder="Naam van de plant..."
+                autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">
+        </div>
+        <div class="modal-field">
+            <label>Aantal:</label>
+            <input type="number" id="note-aantal" min="1" value="1" onfocus="this.select()">
+        </div>
+        <div class="modal-field">
+            <label>Voor wie:</label>
+            <input type="text" id="note-voor-wie" placeholder="Naam klant">
+        </div>
+        <div class="modal-field">
+            <label>Contact:</label>
+            <input type="text" id="note-contact" placeholder="Telefoon/Email">
+        </div>
+        <div class="modal-field">
+            <label>Opmerkingen:</label>
+            <textarea id="note-opmerkingen" rows="3" placeholder="Extra notities..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeNoteModal()" style="flex:1;">Annuleren</button>
+            <button class="btn" onclick="saveNote()" style="flex:1;">📝 Opslaan</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════
+let currentProducts = [];
+let notes = [];
+let selectedProduct = null;
+
+// Tracker state
+let trackerDb = {};       // { year: { week: { code: {name, qty} } } }
+let currentGenus = '';
+let selectedYear = '';
+let toastPlant = null;    // plant die in de tracker-toast zit (voor notitie)
+
+// ═══════════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════════
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const tab = document.getElementById(name + '-tab');
+    if (tab) tab.classList.add('active');
+    if (btn) btn.classList.add('active');
+
+    if (name === 'historie') {
+        buildHistZoekscherm();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DATUM HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+function extractDateFromFilename(filename) {
+    const m = filename.match(/(\d{2})-(\d{2})-(\d{4})/);
+    if (m) return { raw: `${m[1]}-${m[2]}-${m[3]}`, dd: m[1], mm: m[2], yyyy: m[3] };
+    return null;
+}
+
+function updateHeaderDatum(dateStr) {
+    const el = document.getElementById('lijst-datum');
+    if (!dateStr) { el.textContent = ''; return; }
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        const listDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        const diffDays = Math.floor((new Date() - listDate) / 86400000);
+        el.textContent = `📅 Lijst: ${dateStr}`;
+        el.classList.toggle('oud', diffDays > 14);
+    } else {
+        el.textContent = `📅 ${dateStr}`;
+    }
+}
+
+function weekFromDate(dd, mm, yyyy) {
+    const d = new Date(`${yyyy}-${mm}-${dd}`);
+    if (isNaN(d)) return null;
+    const jan4 = new Date(d.getFullYear(), 0, 4);
+    const startW1 = new Date(jan4);
+    startW1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+    const week = Math.floor((d - startW1) / (7 * 86400000)) + 1;
+    return { week, year: String(d.getFullYear()) };
+}
+
+function monthLabel(week, yr) {
+    const jan4 = new Date(Number(yr), 0, 4);
+    const start = new Date(jan4);
+    start.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+    const d = new Date(start);
+    d.setDate(d.getDate() + (week - 1) * 7);
+    return d.toLocaleString('nl', { month: 'short' });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INDEXEDDB (tracker data)
+// ═══════════════════════════════════════════════════════════════════════
+const IDB_NAME = 'heutinck_db', IDB_STORE = 'chunks';
+
+function openIdb() {
+    return new Promise((res, rej) => {
+        const r = indexedDB.open(IDB_NAME, 1);
+        r.onupgradeneeded = e => {
+            const idb = e.target.result;
+            if (!idb.objectStoreNames.contains(IDB_STORE)) idb.createObjectStore(IDB_STORE);
+        };
+        r.onsuccess = e => res(e.target.result);
+        r.onerror   = e => rej(e.target.error);
+    });
+}
+function idbGetAll(idb) {
+    return new Promise((res, rej) => {
+        const tx = idb.transaction(IDB_STORE, 'readonly');
+        const out = {};
+        const cur = tx.objectStore(IDB_STORE).openCursor();
+        cur.onsuccess = e => {
+            const c = e.target.result;
+            if (c) { out[c.key] = c.value; c.continue(); } else res(out);
+        };
+        cur.onerror = e => rej(e.target.error);
+    });
+}
+function idbPut(key, value, idb) {
+    return new Promise((res, rej) => {
+        const tx = idb.transaction(IDB_STORE, 'readwrite');
+        const r = tx.objectStore(IDB_STORE).put(value, key);
+        r.onsuccess = () => res();
+        r.onerror = e => rej(e.target.error);
+    });
+}
+function idbClear(idb) {
+    return new Promise((res, rej) => {
+        const tx = idb.transaction(IDB_STORE, 'readwrite');
+        const r = tx.objectStore(IDB_STORE).clear();
+        r.onsuccess = () => res();
+        r.onerror = e => rej(e.target.error);
+    });
+}
+
+async function loadTrackerDb() {
+    try {
+        const idb = await openIdb();
+        const chunks = await idbGetAll(idb);
+        idb.close();
+        const result = {};
+        for (const [key, chunk] of Object.entries(chunks)) {
+            const m = key.match(/^(\d{4})_Q\d$/);
+            if (!m) continue;
+            const yr = m[1];
+            if (!result[yr]) result[yr] = {};
+            Object.assign(result[yr], chunk);
+        }
+        // Als IDB al data heeft: gebruik die
+        if (Object.keys(result).length > 0) {
+            trackerDb = result;
+            updateHistWeekLabel();
+            return;
+        }
+        // IDB leeg: probeer backup naast dit bestand te fetchen (werkt op GitHub Pages)
+        await autoFetchBackup();
+    } catch(e) {
+        console.warn('IDB laden mislukt', e);
+        await autoFetchBackup();
+    }
+}
+
+async function autoFetchBackup() {
+    // Bepaal pad: zelfde map als de html
+    const backupName = 'heutinck_backup_2026-06-26.json';
+    const base = window.location.href.replace(/\/[^\/]*$/, '/');
+    const url  = base + backupName;
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) return; // bestand niet aanwezig, stilletjes doorgaan
+        const data = await resp.json();
+        // Valideer: moet jaar-keys bevatten
+        const keys = Object.keys(data);
+        if (!keys.every(k => /^\d{4}$/.test(k))) return;
+        trackerDb = data;
+        await saveTrackerDb();
+        updateHistWeekLabel();
+        console.log('Backup automatisch geladen via fetch');
+    } catch(e) {
+        // Geen server (lokaal file://) of bestand niet gevonden: geen probleem
+        console.info('Auto-fetch backup niet beschikbaar:', e.message);
+    }
+}
+
+async function saveTrackerDb() {
+    try {
+        const idb = await openIdb();
+        await idbClear(idb);
+        for (const [yr, weeks] of Object.entries(trackerDb)) {
+            const quarters = {};
+            for (const [w, data] of Object.entries(weeks)) {
+                const q = 'Q' + Math.min(4, Math.ceil(Number(w) / 13));
+                if (!quarters[q]) quarters[q] = {};
+                quarters[q][w] = data;
+            }
+            for (const [q, chunk] of Object.entries(quarters)) {
+                await idbPut(yr + '_' + q, chunk, idb);
+            }
+        }
+        idb.close();
+    } catch(e) { console.warn('IDB opslaan mislukt', e); }
+}
+
+function updateHistWeekLabel() {
+    // Toon hoeveel weken beschikbaar
+    let totalWks = 0;
+    for (const yr of Object.values(trackerDb)) {
+        totalWks += Object.keys(yr).length;
+    }
+    const el = document.getElementById('hist-week-label');
+    if (el) el.textContent = totalWks > 0 ? `(${totalWks}w)` : '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LOCALSTORAGE (producten + notities)
+// ═══════════════════════════════════════════════════════════════════════
+function saveData() {
+    if (currentProducts.length > 0) {
+        const compact = currentProducts.map(p => [p.name, p.quantity, p.potSize, p.price, p.opm || '']);
+        try { localStorage.setItem('heutinckProducts', JSON.stringify(compact)); } catch(e) {}
+    }
+    try { localStorage.setItem('heutinckNotes', JSON.stringify(notes)); } catch(e) {}
+}
+
+function loadData() {
+    const savedDatum    = localStorage.getItem('heutinckLijstDatum');
+    const savedProducts = localStorage.getItem('heutinckProducts');
+    const savedNotes    = localStorage.getItem('heutinckNotes');
+
+    if (savedDatum) updateHeaderDatum(savedDatum);
+
+    if (savedProducts) {
+        const compact = JSON.parse(savedProducts);
+        currentProducts = compact.map(p => Array.isArray(p)
+            ? { name: p[0], quantity: p[1], potSize: p[2], price: p[3], opm: p[4] || '' }
+            : p
+        );
+    }
+    document.getElementById('product-count-header').textContent =
+        currentProducts.length > 0 ? `${currentProducts.length} soorten` : 'Upload een Excel-lijst';
+    renderProducts();
+
+    if (savedNotes) { notes = JSON.parse(savedNotes); renderNotes(); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════════
+let simpleToastTimer;
+function showToast(msg, bg = '#2e7d32') {
+    const el = document.getElementById('simple-toast');
+    el.textContent = msg;
+    el.style.background = bg;
+    el.style.display = 'block';
+    clearTimeout(simpleToastTimer);
+    simpleToastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+let trackerToastTimer;
+function showTrackerToast(name, week, year, qty, code) {
+    toastPlant = { name, week, year, qty, code };
+    document.getElementById('t-week').textContent = `Week ${week} · ${year}`;
+    document.getElementById('t-name').textContent = name;
+    document.getElementById('t-qty').textContent  = qty.toLocaleString('nl');
+    document.getElementById('t-swatch').style.background = stockColor(qty);
+    const toast = document.getElementById('tracker-toast');
+    toast.classList.add('show');
+    clearTimeout(trackerToastTimer);
+    trackerToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// EXCEL UPLOAD (voorraadlijst + tracker)
+// ═══════════════════════════════════════════════════════════════════════
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const dateInfo = extractDateFromFilename(file.name);
+    if (dateInfo) {
+        localStorage.setItem('heutinckLijstDatum', dateInfo.raw);
+        updateHeaderDatum(dateInfo.raw);
+    }
+    const reader = new FileReader();
+    reader.onerror = () => showInfo('Kon het bestand niet lezen.', '⚠️');
+    reader.onload = function(e) {
+        try {
+            if (typeof XLSX === 'undefined') { showInfo('Excel-bibliotheek niet geladen.', '⚠️'); return; }
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const jsonData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+            if (!jsonData || jsonData.length < 2) { showInfo('Bestand lijkt leeg of onbekende opmaak.', '⚠️'); return; }
+            processExcelData(jsonData, file.name, dateInfo);
+        } catch(err) { showInfo('Fout bij verwerken: ' + err.message, '⚠️'); }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+}
+
+function processExcelData(data, filename, dateInfo) {
+    // Voorraadlijst verwerken
+    const seen = new Set();
+    const products = data.slice(1).map(row => ({
+        name:     row[0] ? String(row[0]).trim() : null,
+        quantity: row[1] !== undefined ? String(row[1]) : '',
+        potSize:  row[2] ? String(row[2]) : '',
+        price:    parseFloat(row[3]) || 0,
+        opm:      row[4] ? String(row[4]).trim() : '',
+    })).filter(p => p.name && !seen.has(p.name.toLowerCase()) && seen.add(p.name.toLowerCase()));
+
+    // Vergelijk met vorige
+    const savedCurrent = localStorage.getItem('heutinckCurrentNames');
+    const prevNames = savedCurrent ? new Set(JSON.parse(savedCurrent)) : new Set();
+    const newNames  = new Set(products.map(p => p.name.toLowerCase()));
+    const nieuweItems     = products.filter(p => !prevNames.has(p.name.toLowerCase()));
+    const verwijderdItems = [...prevNames].filter(n => !newNames.has(n)).map(n => ({ name: n }));
+    try {
+        localStorage.setItem('heutinckCurrentNames', JSON.stringify([...newNames]));
+    } catch(e) {}
+
+    currentProducts = products;
+    document.getElementById('product-count-header').textContent = `${products.length} soorten`;
+    renderProducts();
+    saveData();
+
+    // Ook toevoegen aan tracker (als datum bekend)
+    if (dateInfo) {
+        addToTrackerDb(data, dateInfo).then(() => {
+            updateHistWeekLabel();
+        });
+    }
+
+    showImportDialog(products.length, nieuweItems, verwijderdItems);
+}
+
+async function addToTrackerDb(rows, dateInfo) {
+    const wkInfo = weekFromDate(dateInfo.dd, dateInfo.mm, dateInfo.yyyy);
+    if (!wkInfo) return;
+    const { week, year } = wkInfo;
+
+    // Zoek header-rij
+    const hi = rows.findIndex(r => r[0] && String(r[0]).toLowerCase().includes('plantnaam'));
+    const startRow = hi >= 0 ? hi + 1 : 1;
+
+    if (!trackerDb[year]) trackerDb[year] = {};
+    if (!trackerDb[year][week]) trackerDb[year][week] = {};
+
+    rows.slice(startRow).forEach(r => {
+        if (!r[0]) return;
+        const name = String(r[0]).trim();
+        const qty  = typeof r[1] === 'number' ? Number(r[1]) : 0;
+        // Code: kolom 5 als aanwezig, anders naam als sleutel
+        const code = r[5] ? String(r[5]).trim() : name.toLowerCase().replace(/\s+/g, '_');
+        trackerDb[year][week][code] = { name, qty };
+    });
+
+    await saveTrackerDb();
+}
+
+// Extra xlsx-bestanden direct naar tracker
+function importXlsx(files) {
+    if (!files || !files.length) return;
+    function doImport() {
+        const results = [], errors = [];
+        let done = 0;
+        Array.from(files).forEach(file => {
+            const di = extractDateFromFilename(file.name);
+            if (!di) {
+                errors.push(`"${file.name}": geen datum (dd-mm-yyyy) gevonden`);
+                done++; if (done === files.length) finish(results, errors);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async e => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    await addToTrackerDb(rows, di);
+                    const wkInfo = weekFromDate(di.dd, di.mm, di.yyyy);
+                    const cnt = wkInfo ? Object.keys(trackerDb[wkInfo.year]?.[wkInfo.week] || {}).length : 0;
+                    results.push(`week ${wkInfo?.week} ${wkInfo?.year}: ${cnt} planten`);
+                } catch(err) { errors.push(`"${file.name}": ${err.message}`); }
+                done++; if (done === files.length) finish(results, errors);
+            };
+            reader.onerror = () => { errors.push(`"${file.name}": leesout`); done++; if (done === files.length) finish(results, errors); };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    function finish(results, errors) {
+        updateHistWeekLabel();
+        const msg = (results.length ? '✓ Toegevoegd: ' + results.join(', ') : '') +
+                    (errors.length ? '\n⚠ Fouten:\n' + errors.join('\n') : '');
+        showInfo(msg || 'Klaar!', results.length ? '✅' : '⚠️');
+        buildHistZoekscherm();
+    }
+    if (typeof XLSX !== 'undefined') { doImport(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = doImport;
+    s.onerror = () => showInfo('Kon SheetJS niet laden.', '⚠️');
+    document.head.appendChild(s);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// VOORRAAD TABEL
+// ═══════════════════════════════════════════════════════════════════════
+function renderProducts(searchTerm = '') {
+    const container = document.getElementById('products-table');
+    if (!container) return;
+    let filtered = currentProducts;
+    if (searchTerm) {
+        const terms = searchTerm.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        filtered = filtered.filter(p => {
+            const words = p.name.toLowerCase().split(/\s+/);
+            return terms.every(t => words.some(w => w.replace(/['"]/g,'').startsWith(t.replace(/['"]/g,''))));
+        });
+    }
+    if (filtered.length === 0 && currentProducts.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div>
+            <p style="font-weight:600;margin-bottom:8px;">Nog geen voorraadlijst geladen</p>
+            <p style="font-size:13px;color:#aaa;">Ga naar ⚙️ om een Excel-bestand te uploaden</p></div>`;
+        return;
+    }
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>Geen producten gevonden</p></div>';
+        return;
+    }
+    container.innerHTML = `<table>
+        <thead><tr>
+            <th style="width:52%;">Plant</th>
+            <th style="text-align:center;width:17%;">Voorr.</th>
+            <th style="text-align:center;width:8%;">Opm</th>
+            <th style="text-align:right;width:23%;">Prijs</th>
+        </tr></thead>
+        <tbody>
+            ${filtered.map(p => `<tr onclick="openNoteModal('${p.name.replace(/'/g,"\\'")}')">
+                <td style="font-size:12px;word-break:break-word;"><strong>${p.name}</strong></td>
+                <td style="text-align:center;font-size:12px;">${p.quantity || '-'}</td>
+                <td style="font-size:11px;color:#555;text-align:center;">${p.opm || ''}</td>
+                <td style="text-align:right;white-space:nowrap;font-size:12px;"><strong>€${p.price.toFixed(2).replace('.', ',')}</strong></td>
+            </tr>`).join('')}
+        </tbody></table>`;
+}
+
+function clearSearch() {
+    const input = document.getElementById('search-box');
+    input.value = '';
+    document.getElementById('clear-search').style.display = 'none';
+    renderProducts('');
+    input.focus();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NOTITIE MODAL
+// ═══════════════════════════════════════════════════════════════════════
+function openNoteModal(plantName) {
+    const product = currentProducts.find(p => p.name === plantName);
+    selectedProduct = product
+        ? { name: product.name, quantity: product.quantity, potSize: product.potSize, price: product.price, source: 'voorraad' }
+        : { name: plantName, quantity: null, potSize: '', price: 0, source: 'voorraad' };
+    document.getElementById('modal-vrije-naam-field').style.display = 'none';
+    document.getElementById('modal-plant-name').textContent = plantName;
+    document.getElementById('note-aantal').value = 1;
+    document.getElementById('note-voor-wie').value = '';
+    document.getElementById('note-contact').value = '';
+    document.getElementById('note-opmerkingen').value = '';
+    document.getElementById('note-modal').style.display = 'block';
+}
+
+function openNoteModalVrij() {
+    selectedProduct = { name: '', quantity: null, potSize: '', price: 0, source: 'vrij' };
+    document.getElementById('modal-plant-name').textContent = 'Nieuwe notitie';
+    document.getElementById('modal-vrije-naam-field').style.display = 'block';
+    document.getElementById('modal-vrije-naam').value = '';
+    document.getElementById('note-aantal').value = 1;
+    document.getElementById('note-voor-wie').value = '';
+    document.getElementById('note-contact').value = '';
+    document.getElementById('note-opmerkingen').value = '';
+    document.getElementById('note-modal').style.display = 'block';
+}
+
+function openNoteFromGenus() {
+    // Notitie vanuit het geslacht (tracker detail)
+    selectedProduct = { name: currentGenus, quantity: null, potSize: '', price: 0, source: 'tracker' };
+    document.getElementById('modal-vrije-naam-field').style.display = 'none';
+    document.getElementById('modal-plant-name').textContent = currentGenus;
+    document.getElementById('note-aantal').value = 1;
+    document.getElementById('note-voor-wie').value = '';
+    document.getElementById('note-contact').value = '';
+    document.getElementById('note-opmerkingen').value = '';
+    document.getElementById('note-modal').style.display = 'block';
+}
+
+function openNoteFromTrackerToast() {
+    if (!toastPlant) return;
+    selectedProduct = { name: toastPlant.name, quantity: toastPlant.qty, potSize: '', price: 0, source: 'tracker', week: toastPlant.week, year: toastPlant.year };
+    document.getElementById('modal-vrije-naam-field').style.display = 'none';
+    document.getElementById('modal-plant-name').textContent = toastPlant.name;
+    document.getElementById('note-aantal').value = 1;
+    document.getElementById('note-voor-wie').value = '';
+    document.getElementById('note-contact').value = '';
+    document.getElementById('note-opmerkingen').value = '';
+    document.getElementById('tracker-toast').classList.remove('show');
+    document.getElementById('note-modal').style.display = 'block';
+}
+
+function editNote(index) {
+    const note = notes[index];
+    selectedProduct = { name: note.plant, quantity: note.voorraad, potSize: note.potSize, price: note.price, source: 'edit', noteIndex: index };
+    document.getElementById('modal-vrije-naam-field').style.display = 'none';
+    document.getElementById('modal-plant-name').textContent = note.plant;
+    document.getElementById('note-aantal').value = note.aantal || 1;
+    document.getElementById('note-voor-wie').value = note.voorWie || '';
+    document.getElementById('note-contact').value = note.contact || '';
+    document.getElementById('note-opmerkingen').value = note.opmerkingen || '';
+    document.getElementById('note-modal').style.display = 'block';
+}
+
+function closeNoteModal() {
+    document.getElementById('note-modal').style.display = 'none';
+    selectedProduct = null;
+}
+
+function saveNote() {
+    if (!selectedProduct) return;
+
+    if (selectedProduct.source === 'edit') {
+        const note = notes[selectedProduct.noteIndex];
+        if (note) {
+            note.aantal      = parseInt(document.getElementById('note-aantal').value) || 1;
+            note.voorWie     = document.getElementById('note-voor-wie').value.trim();
+            note.contact     = document.getElementById('note-contact').value.trim();
+            note.opmerkingen = document.getElementById('note-opmerkingen').value.trim();
+        }
+        saveData(); renderNotes(); closeNoteModal();
+        showToast('✓ Notitie bijgewerkt');
+        return;
+    }
+
+    const plantNaam = selectedProduct.source === 'vrij'
+        ? (document.getElementById('modal-vrije-naam').value.trim() || '(geen naam)')
+        : selectedProduct.name;
+
+    const nieuw = {
+        plant:       plantNaam,
+        voorraad:    selectedProduct.quantity,
+        potSize:     selectedProduct.potSize,
+        price:       selectedProduct.price,
+        aantal:      parseInt(document.getElementById('note-aantal').value) || 1,
+        voorWie:     document.getElementById('note-voor-wie').value.trim(),
+        contact:     document.getElementById('note-contact').value.trim(),
+        opmerkingen: document.getElementById('note-opmerkingen').value.trim(),
+        timestamp:   new Date().toISOString(),
+    };
+    // Extra context als vanuit tracker
+    if (selectedProduct.week) {
+        nieuw.trackerWeek = selectedProduct.week;
+        nieuw.trackerYear = selectedProduct.year;
+    }
+    notes.push(nieuw);
+    saveData(); renderNotes(); closeNoteModal();
+    showToast(`📝 ${plantNaam}`);
+    // Switch naar notities tab
+    switchTab('notities', document.getElementById('tab-notities'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NOTITIES RENDEREN
+// ═══════════════════════════════════════════════════════════════════════
+function renderNotes() {
+    const container = document.getElementById('notes-list');
+    const count = document.getElementById('notes-count');
+    if (!container) return;
+    if (count) count.textContent = notes.length > 0 ? `(${notes.length})` : '';
+    if (notes.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>Nog geen notities</p><p style="font-size:12px;margin-top:8px;">Tik op een plant in de voorraad of het verloop</p></div>';
+        return;
+    }
+    // Nieuwste bovenaan
+    const sorted = [...notes].map((n,i) => ({...n, origIndex: i})).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    container.innerHTML = sorted.map(note => `
+        <div class="note-item">
+            <div class="note-header">
+                <div class="note-plant">${note.plant}${note.trackerWeek ? ` <span style="font-size:10px;color:#999;font-weight:400;">w${note.trackerWeek}·${note.trackerYear}</span>` : ''}</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button onclick="editNote(${note.origIndex})"
+                        style="background:#e8f5e9;color:#2e7d32;border:none;border-radius:4px;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
+                    <button class="btn-delete" onclick="deleteNote(${note.origIndex})">×</button>
+                </div>
+            </div>
+            <div class="note-details">
+                <div><strong>Aantal:</strong> ${note.aantal} | <strong>Voorraad:</strong> ${note.voorraad || '-'}</div>
+                ${note.voorWie ? `<div><strong>Voor wie:</strong> ${note.voorWie}</div>` : ''}
+                ${note.contact ? `<div><strong>Contact:</strong> ${note.contact}</div>` : ''}
+                ${note.opmerkingen ? `<div><strong>Notities:</strong> ${note.opmerkingen}</div>` : ''}
+                <div style="font-size:11px;color:#999;margin-top:5px;">${new Date(note.timestamp).toLocaleString('nl-NL')}</div>
+            </div>
+        </div>`).join('');
+}
+
+function deleteNote(index) {
+    showConfirm('Notitie verwijderen?', '', 'Verwijderen', '#d32f2f', () => {
+        notes.splice(index, 1); saveData(); renderNotes();
+    });
+}
+
+function clearAllNotes() {
+    if (notes.length === 0) return;
+    showConfirm('Alle notities verwijderen?', 'Dit kan niet ongedaan gemaakt worden.', 'Alles verwijderen', '#d32f2f', () => {
+        notes = []; saveData(); renderNotes();
+    });
+}
+
+function exportNotities() {
+    if (notes.length === 0) { showInfo('Geen notities om te exporteren.', '📝'); return; }
+    const datum = new Date().toLocaleDateString('nl-NL');
+    let tekst = `Notities Heutinck — ${datum}\n${'═'.repeat(40)}\n`;
+    const sorted = [...notes].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    sorted.forEach(note => {
+        tekst += `${note.plant}\n`;
+        tekst += `  Aantal: ${note.aantal}  |  Voorraad: ${note.voorraad || '-'}\n`;
+        if (note.voorWie)     tekst += `  Voor wie: ${note.voorWie}\n`;
+        if (note.contact)     tekst += `  Contact:  ${note.contact}\n`;
+        if (note.opmerkingen) tekst += `  Notitie:  ${note.opmerkingen}\n`;
+        if (note.trackerWeek) tekst += `  Week: ${note.trackerWeek}·${note.trackerYear}\n`;
+        tekst += `  📅 ${new Date(note.timestamp).toLocaleString('nl-NL')}\n${'─'.repeat(40)}\n`;
+    });
+    const blob = new Blob([tekst], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `notities-heutinck-${datum.replace(/\//g,'-')}.txt`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TRACKER — KLEUREN
+// ═══════════════════════════════════════════════════════════════════════
+function stockColor(q) {
+    if (q <= 0)   return '#4b5563';
+    if (q < 100)  return '#ef4444';
+    if (q < 250)  return '#f97316';
+    if (q < 500)  return '#facc15';
+    if (q < 1000) return '#4ade80';
+    return '#166534';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TRACKER — ZOEKSCHERM (genus lijst)
+// ═══════════════════════════════════════════════════════════════════════
+function buildHistZoekscherm(query = '') {
+    const hasData = Object.keys(trackerDb).length > 0;
+    const geenData = document.getElementById('hist-geen-data');
+    const genusList = document.getElementById('hist-genus-list');
+    const hint = document.getElementById('hist-hint');
+    geenData.classList.toggle('show', !hasData);
+    genusList.style.display = hasData ? '' : 'none';
+    hint.style.display = hasData ? '' : 'none';
+    if (!hasData) return;
+
+    // Genera uit meest recente week van elk jaar
+    const genera = {};
+    for (const [yr, weeks] of Object.entries(trackerDb)) {
+        const latestWk = Object.keys(weeks).map(Number).sort((a,b) => b-a)[0];
+        if (!latestWk) continue;
+        for (const [, plant] of Object.entries(weeks[latestWk])) {
+            const genus = plant.name.split(' ')[0];
+            if (query && !genus.toLowerCase().startsWith(query.toLowerCase())) continue;
+            if (!genera[genus]) genera[genus] = { count: 0, qtys: [] };
+            genera[genus].count++;
+            genera[genus].qtys.push(plant.qty);
+        }
+    }
+
+    const list = Object.entries(genera)
+        .map(([name, d]) => ({ name, count: d.count, qtys: d.qtys }))
+        .sort((a,b) => a.name.localeCompare(b.name, 'nl'));
+
+    hint.textContent = list.length + ' geslachten' + (query ? ' gevonden' : ' beschikbaar');
+
+    if (list.length === 0) {
+        genusList.innerHTML = `<div class="geen-planten">Geen geslacht gevonden voor "${query}"</div>`;
+        return;
+    }
+
+    genusList.innerHTML = list.map(g => {
+        const dots = g.qtys.slice(0,5).map(q => `<div class="gdot" style="background:${stockColor(q)}"></div>`).join('');
+        return `<div class="genus-item" data-genus="${g.name}">
+            <div class="genus-dots">${dots}</div>
+            <div class="genus-name">${g.name}</div>
+            <div class="genus-count">${g.count} soorten</div>
+            <div class="genus-chevron">›</div>
+        </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TRACKER — DETAIL SCHERM
+// ═══════════════════════════════════════════════════════════════════════
+function openDetail(genus) {
+    currentGenus = genus;
+    document.getElementById('detail-genus-name').textContent = genus;
+    document.getElementById('detail-zoek').value = '';
+
+    const years = Object.keys(trackerDb).filter(y => /^\d{4}$/.test(y)).sort();
+    if (!selectedYear || !years.includes(selectedYear)) {
+        selectedYear = years[years.length - 1] || '';
+    }
+
+    // Jaar-tabs
+    document.getElementById('yr-tabs').innerHTML = years.map(yr =>
+        `<button class="yr-tab${yr === selectedYear ? ' active' : ''}" data-yr="${yr}">${yr}</button>`
+    ).join('');
+
+    document.getElementById('hist-detail').classList.add('open');
+    renderDetail('');
+}
+
+function closeDetail() {
+    document.getElementById('hist-detail').classList.remove('open');
+}
+
+function renderDetail(subQuery) {
+    if (!selectedYear || !trackerDb[selectedYear]) {
+        document.getElementById('plant-list').innerHTML = `<div class="geen-planten">Geen data voor ${selectedYear}</div>`;
+        return;
+    }
+
+    const weeks = Object.keys(trackerDb[selectedYear]).map(Number).sort((a,b) => a-b);
+
+    // Planten van dit geslacht over alle weken
+    const plantsMap = {};
+    for (const wk of weeks) {
+        for (const [code, plant] of Object.entries(trackerDb[selectedYear][wk])) {
+            if (plant.name.split(' ')[0].toLowerCase() !== currentGenus.toLowerCase()) continue;
+            if (!plantsMap[code]) plantsMap[code] = plant.name;
+        }
+    }
+
+    let plants = Object.entries(plantsMap)
+        .map(([code, name]) => ({ code, name }))
+        .sort((a,b) => a.name.localeCompare(b.name, 'nl'));
+
+    if (subQuery) {
+        const q = subQuery.toLowerCase();
+        plants = plants.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    if (weeks.length) {
+        document.getElementById('week-range-label').textContent = `w${weeks[0]}–w${weeks[weeks.length-1]} · ${selectedYear}`;
+    }
+
+    // Week-header
+    let prevMo = null;
+    document.getElementById('wh-weeks').innerHTML = weeks.map(w => {
+        const mo = monthLabel(w, selectedYear);
+        const newMo = mo !== prevMo; prevMo = mo;
+        return `<div class="wh-wk"><div class="wh-mo">${newMo ? mo : ''}</div>${w}</div>`;
+    }).join('');
+
+    if (plants.length === 0) {
+        document.getElementById('plant-list').innerHTML =
+            `<div class="geen-planten">Geen soorten gevonden${subQuery ? ` voor "${subQuery}"` : ''}</div>`;
+        return;
+    }
+
+    document.getElementById('plant-list').innerHTML = plants.map(plant => {
+        const words = plant.name.split(' ');
+        const nameHtml = words.length > 1
+            ? `<span class="genus-part">${words[0]}</span> ${words.slice(1).join(' ')}`
+            : words[0];
+
+        const dots = weeks.map(w => {
+            const entry = trackerDb[selectedYear][w]?.[plant.code];
+            if (!entry) return `<div class="wk-dot empty"></div>`;
+            const c = stockColor(entry.qty);
+            const label = entry.qty >= 1000 ? Math.round(entry.qty/1000)+'k' : entry.qty;
+            return `<div class="wk-dot" style="background:${c}"
+                data-name="${plant.name.replace(/"/g,'&quot;')}"
+                data-week="${w}" data-year="${selectedYear}"
+                data-qty="${entry.qty}" data-code="${plant.code}">
+                <span class="qty-label">${label}</span>
+            </div>`;
+        }).join('');
+
+        return `<div class="plant-row">
+            <div class="plant-nm">${nameHtml}</div>
+            <div class="plant-weeks scroll-sync">${dots}</div>
+        </div>`;
+    }).join('');
+
+    syncScrollSetup();
+}
+
+// ── Scroll sync
+let isSyncing = false;
+function syncScrollSetup() {
+    const hdr = document.getElementById('wh-weeks');
+    const rows = document.querySelectorAll('.plant-weeks');
+    hdr.addEventListener('scroll', () => {
+        if (isSyncing) return; isSyncing = true;
+        rows.forEach(r => r.scrollLeft = hdr.scrollLeft);
+        isSyncing = false;
+    }, { passive: true });
+    rows.forEach(r => r.addEventListener('scroll', e => {
+        if (isSyncing) return; isSyncing = true;
+        hdr.scrollLeft = e.target.scrollLeft;
+        rows.forEach(x => { if (x !== e.target) x.scrollLeft = e.target.scrollLeft; });
+        isSyncing = false;
+    }, { passive: true }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// BACKUP
+// ═══════════════════════════════════════════════════════════════════════
+function exportBackup() {
+    if (notes.length === 0 && currentProducts.length === 0) {
+        showInfo('Niets om te exporteren.', '📝'); return;
+    }
+    const backup = {
+        versie: 3,
+        exportDatum: new Date().toISOString(),
+        lijstDatum: localStorage.getItem('heutinckLijstDatum') || '',
+        producten: currentProducts.map(p => [p.name, p.quantity, p.potSize, p.price, p.opm || '']),
+        vorigeNamen: (() => { try { return JSON.parse(localStorage.getItem('heutinckCurrentNames') || '[]'); } catch(e) { return []; } })(),
+        notities: notes,
+    };
+    const datum = new Date().toLocaleDateString('nl-NL').replace(/\//g, '-');
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `backup-heutinck-${datum}.json`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const isLarge = file.size > 2 * 1024 * 1024;
+    if (isLarge) showInfo('Grote backup laden, even geduld\u2026', '\u23f3');
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const imported = JSON.parse(e.target.result);
+            let msg = [];
+            // Detecteer formaat: oud tracker-formaat heeft alleen jaar-keys
+            const keys = Object.keys(imported);
+            const isTrackerFormat = keys.length > 0 && keys.every(k => /^\d{4}$/.test(k));
+            if (isTrackerFormat) {
+                trackerDb = imported;
+                await saveTrackerDb();
+                const totaalWeken = keys.reduce((s, yr) => s + Object.keys(imported[yr]).length, 0);
+                const totaalEntries = keys.reduce((s, yr) =>
+                    s + Object.values(imported[yr]).reduce((ss, wk) => ss + Object.keys(wk).length, 0), 0);
+                updateHistWeekLabel();
+                closeInfo();
+                showToast('\u2713 Historie geladen: ' + totaalWeken + ' weken \u00b7 ' + totaalEntries.toLocaleString('nl') + ' entries');
+                buildHistZoekscherm();
+                return;
+            }
+            // Nieuw gecombineerd formaat
+            if (imported.notities && imported.notities.length) { notes = imported.notities; msg.push(notes.length + ' notities'); }
+            if (imported.producten && imported.producten.length) {
+                currentProducts = imported.producten.map(p => Array.isArray(p)
+                    ? { name: p[0], quantity: p[1], potSize: p[2], price: p[3], opm: p[4] || '' } : p);
+                msg.push(currentProducts.length + ' planten');
+            }
+            if (imported.vorigeNamen && imported.vorigeNamen.length) {
+                try { localStorage.setItem('heutinckCurrentNames', JSON.stringify(imported.vorigeNamen)); } catch(e) {}
+            }
+            if (imported.lijstDatum) {
+                localStorage.setItem('heutinckLijstDatum', imported.lijstDatum);
+                updateHeaderDatum(imported.lijstDatum);
+            }
+            saveData(); renderProducts(); renderNotes();
+            document.getElementById('product-count-header').textContent =
+                currentProducts.length > 0 ? currentProducts.length + ' soorten' : 'Upload een Excel-lijst';
+            closeInfo();
+            showToast('\u2713 Hersteld: ' + msg.join(', '));
+        } catch(err) {
+            closeInfo();
+            showInfo('Ongeldig bestand: ' + err.message, '\u26a0\ufe0f');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// IMPORT RESULTAAT DIALOOG
+// ═══════════════════════════════════════════════════════════════════════
+function showImportDialog(total, nieuw, verwijderd) {
+    document.getElementById('import-total').textContent = total;
+    document.getElementById('import-new-count').textContent = nieuw.length;
+    document.getElementById('import-removed-count').textContent = verwijderd.length;
+    let html = '';
+    if (nieuw.length > 0) {
+        html += `<div style="margin-bottom:10px;">
+            <div style="font-weight:700;font-size:13px;color:#2e7d32;margin-bottom:6px;">🌱 Nieuwe planten (${nieuw.length}):</div>
+            ${nieuw.map(p => `<div style="font-size:12px;padding:4px 8px;background:#f1f8f1;border-radius:4px;margin-bottom:3px;">
+                <strong>${p.name}</strong> <span style="color:#888;">${p.potSize} · €${p.price.toFixed(2).replace('.',',')}</span>
+            </div>`).join('')}</div>`;
+    }
+    if (verwijderd.length > 0) {
+        html += `<div><div style="font-weight:700;font-size:13px;color:#e65100;margin-bottom:6px;">❌ Niet meer in lijst (${verwijderd.length}):</div>
+            ${verwijderd.map(p => `<div style="font-size:12px;padding:4px 8px;background:#fff8f1;border-radius:4px;margin-bottom:3px;"><strong>${p.name}</strong></div>`).join('')}
+        </div>`;
+    }
+    if (nieuw.length === 0 && verwijderd.length === 0) {
+        html = '<div style="text-align:center;color:#888;font-size:13px;padding:10px;">Geen wijzigingen t.o.v. de vorige lijst.</div>';
+    }
+    document.getElementById('import-new-list').innerHTML = html;
+    document.getElementById('import-new-list').scrollTop = 0;
+    document.getElementById('import-dialog').style.display = 'block';
+}
+
+function closeImportDialog() {
+    document.getElementById('import-dialog').style.display = 'none';
+    switchTab('voorraad', document.getElementById('tab-voorraad'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DIALOGEN
+// ═══════════════════════════════════════════════════════════════════════
+let _confirmCallback = null;
+function showConfirm(message, sub, okLabel, okColor, callback) {
+    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-sub').textContent = sub || '';
+    document.getElementById('confirm-icon').textContent = '🗑️';
+    const okBtn = document.getElementById('confirm-ok');
+    okBtn.textContent = okLabel || 'Bevestigen';
+    okBtn.style.background = okColor || '#d32f2f';
+    _confirmCallback = callback;
+    document.getElementById('confirm-dialog').style.display = 'block';
+}
+function closeConfirm(confirmed) {
+    document.getElementById('confirm-dialog').style.display = 'none';
+    if (confirmed && _confirmCallback) _confirmCallback();
+    _confirmCallback = null;
+}
+function showInfo(message, icon) {
+    document.getElementById('info-icon').textContent = icon || 'ℹ️';
+    document.getElementById('info-message').textContent = message;
+    document.getElementById('info-dialog').style.display = 'block';
+}
+function closeInfo() { document.getElementById('info-dialog').style.display = 'none'; }
+
+// ═══════════════════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════════════════
+document.getElementById('confirm-ok').addEventListener('click', () => closeConfirm(true));
+
+document.getElementById('hist-zoek-input').addEventListener('input', function() {
+    buildHistZoekscherm(this.value.trim());
+});
+
+document.getElementById('hist-genus-list').addEventListener('click', function(e) {
+    const item = e.target.closest('.genus-item');
+    if (!item) return;
+    openDetail(item.dataset.genus);
+});
+
+document.getElementById('btn-detail-back').addEventListener('click', closeDetail);
+
+document.getElementById('yr-tabs').addEventListener('click', function(e) {
+    const tab = e.target.closest('.yr-tab');
+    if (!tab) return;
+    selectedYear = tab.dataset.yr;
+    document.querySelectorAll('.yr-tab').forEach(t => t.classList.toggle('active', t.dataset.yr === selectedYear));
+    renderDetail(document.getElementById('detail-zoek').value.trim());
+});
+
+document.getElementById('detail-zoek').addEventListener('input', function() {
+    renderDetail(this.value.trim());
+});
+
+document.getElementById('plant-list').addEventListener('click', function(e) {
+    const dot = e.target.closest('.wk-dot[data-qty]');
+    if (!dot) return;
+    showTrackerToast(dot.dataset.name, dot.dataset.week, dot.dataset.year, Number(dot.dataset.qty), dot.dataset.code);
+});
+
+document.getElementById('t-note-btn').addEventListener('click', openNoteFromTrackerToast);
+
+// Sluit tracker toast bij tap buiten dot/toast
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#tracker-toast') && !e.target.closest('.wk-dot')) {
+        document.getElementById('tracker-toast').classList.remove('show');
+    }
+}, { passive: true });
+
+window.onclick = function(e) {
+    if (e.target === document.getElementById('note-modal')) closeNoteModal();
+    if (e.target === document.getElementById('confirm-dialog')) closeConfirm(false);
+    if (e.target === document.getElementById('info-dialog')) closeInfo();
+};
+
+window.addEventListener('popstate', () => {
+    if (document.getElementById('hist-detail').classList.contains('open')) closeDetail();
+});
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveData(); });
+window.addEventListener('beforeunload', saveData);
+window.addEventListener('blur', saveData);
+
+// ═══════════════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════════════
+loadData();
+loadTrackerDb();
+</script>
+</body>
+</html>
