@@ -134,15 +134,10 @@
 
         /* ── Historie (tracker) tab ── */
         #historie-tab {
-            /* Volledig scherm binnen tab, donker thema */
             background: #0a130a;
-            position: fixed;
-            inset: 0;
-            display: none;
-            flex-direction: column;
-            z-index: 10;
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #historie-tab.active { display: flex; }
 
         /* Historie header */
         .hist-hdr {
@@ -208,16 +203,15 @@
         #hist-geen-data .gd-icon { font-size: 40px; }
         #hist-geen-data p { text-align: center; color: #5a9a5a; font-size: 14px; line-height: 1.5; }
 
-        /* Detail scherm (slide-in over historie) */
+        /* Detail scherm (binnen app, onder de tabs) */
         #hist-detail {
-            position: fixed; inset: 0;
+            display: none;
+            flex-direction: column;
             background: #0a130a;
-            display: flex; flex-direction: column;
-            z-index: 20;
-            transform: translateX(100%);
-            transition: transform .28s cubic-bezier(.4,0,.2,1);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #hist-detail.open { transform: translateX(0); }
+        #hist-detail.open { display: flex; }
 
         .detail-hdr {
             background: #101c10;
@@ -288,7 +282,8 @@
         .wh-wk .wh-mo { font-size: 8px; color: #3a6a3a; }
 
         #plant-list {
-            flex: 1; overflow-y: auto;
+            overflow-y: auto;
+            max-height: 60vh;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 8px;
         }
@@ -452,7 +447,7 @@
 <!-- ── HISTORIE TAB (volledig scherm, donker) ── -->
 <div id="historie-tab" class="tab-content">
     <!-- Zoekscherm genus -->
-    <div id="hist-screen-zoek" style="display:flex;flex-direction:column;flex:1;height:100%;">
+    <div id="hist-screen-zoek" style="display:flex;flex-direction:column;">
         <div class="hist-hdr">
             <div style="flex:1;">
                 <div class="hist-hdr-sub">Heutinck · Voorraad</div>
@@ -473,34 +468,7 @@
     </div>
 </div>
 
-<!-- Detail scherm (slide-in) -->
-<div id="hist-detail">
-    <div class="detail-hdr">
-        <button class="detail-hdr-back" id="btn-detail-back">‹</button>
-        <div style="flex:1;">
-            <div class="detail-hdr-sub">Geslacht</div>
-            <div class="detail-hdr-title" id="detail-genus-name">—</div>
-        </div>
-        <button class="detail-add-note-btn" id="btn-add-note-genus" onclick="openNoteFromGenus()">+ Notitie</button>
-    </div>
-    <div class="yr-tabs" id="yr-tabs"></div>
-    <div class="detail-search-wrap">
-        <input id="detail-zoek" type="search" placeholder="Soort / cultivar zoeken…" autocomplete="off" autocorrect="off" spellcheck="false">
-    </div>
-    <div class="legend-strip">
-        <div class="ls-item"><div class="ls-dot" style="background:#ef4444"></div>&lt;100</div>
-        <div class="ls-item"><div class="ls-dot" style="background:#f97316"></div>100–250</div>
-        <div class="ls-item"><div class="ls-dot" style="background:#facc15"></div>250–500</div>
-        <div class="ls-item"><div class="ls-dot" style="background:#4ade80"></div>500–1k</div>
-        <div class="ls-item"><div class="ls-dot" style="background:#166534"></div>&gt;1k</div>
-        <div class="ls-item" style="margin-left:auto;font-size:10px;color:#5a9a5a;" id="week-range-label"></div>
-    </div>
-    <div class="week-hdr" id="week-hdr">
-        <div class="wh-plant">Plant</div>
-        <div class="wh-weeks" id="wh-weeks"></div>
-    </div>
-    <div id="plant-list"></div>
-</div>
+
 
 <!-- Tracker toast -->
 <div id="tracker-toast">
@@ -508,9 +476,6 @@
     <div class="t-name" id="t-name"></div>
     <div><span class="t-swatch" id="t-swatch"></span><span class="t-qty" id="t-qty"></span></div>
     <div class="t-unit">stuks verkoopbaar</div>
-    <div class="t-actions">
-        <button class="t-note-btn" id="t-note-btn">📝 Notitie toevoegen</button>
-    </div>
 </div>
 
 <!-- Simple toast -->
@@ -1286,17 +1251,19 @@ function openDetail(genus) {
         selectedYear = years[years.length - 1] || '';
     }
 
-    // Jaar-tabs
     document.getElementById('yr-tabs').innerHTML = years.map(yr =>
         `<button class="yr-tab${yr === selectedYear ? ' active' : ''}" data-yr="${yr}">${yr}</button>`
     ).join('');
 
+    // Zoekscherm verbergen, detail tonen (binnen tab)
+    document.getElementById('hist-screen-zoek').style.display = 'none';
     document.getElementById('hist-detail').classList.add('open');
     renderDetail('');
 }
 
 function closeDetail() {
     document.getElementById('hist-detail').classList.remove('open');
+    document.getElementById('hist-screen-zoek').style.display = 'flex';
 }
 
 function renderDetail(subQuery) {
@@ -1363,7 +1330,7 @@ function renderDetail(subQuery) {
         }).join('');
 
         return `<div class="plant-row">
-            <div class="plant-nm">${nameHtml}</div>
+            <div class="plant-nm" onclick="openNoteModal('${plant.name.replace(/\'/g, \'\\\'\')}')" style="cursor:pointer;">${nameHtml}</div>
             <div class="plant-weeks scroll-sync">${dots}</div>
         </div>`;
     }).join('');
@@ -1557,8 +1524,6 @@ document.getElementById('plant-list').addEventListener('click', function(e) {
     if (!dot) return;
     showTrackerToast(dot.dataset.name, dot.dataset.week, dot.dataset.year, Number(dot.dataset.qty), dot.dataset.code);
 });
-
-document.getElementById('t-note-btn').addEventListener('click', openNoteFromTrackerToast);
 
 // Sluit tracker toast bij tap buiten dot/toast
 document.addEventListener('click', function(e) {
