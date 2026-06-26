@@ -496,8 +496,6 @@
     </div>
 </div>
 
-</div>
-
 <!-- Tracker toast -->
 <div id="tracker-toast">
     <div class="t-week" id="t-week"></div>
@@ -1358,7 +1356,7 @@ function renderDetail(subQuery) {
         }).join('');
 
         return `<div class="plant-row">
-            <div class="plant-nm" onclick="openNoteModal('${plant.name.replace(/\'/g, \'\\\'\')}')" style="cursor:pointer;">${nameHtml}</div>
+            <div class="plant-nm" data-plantname="${plant.name}" style="cursor:pointer;">${nameHtml}</div>
             <div class="plant-weeks scroll-sync">${dots}</div>
         </div>`;
     }).join('');
@@ -1548,6 +1546,13 @@ document.getElementById('detail-zoek').addEventListener('input', function() {
 });
 
 document.getElementById('plant-list').addEventListener('click', function(e) {
+    // Klik op plantnaam → notitie modal
+    const nm = e.target.closest('.plant-nm[data-plantname]');
+    if (nm) {
+        openNoteModal(nm.dataset.plantname);
+        return;
+    }
+    // Klik op weekblokje → toast
     const dot = e.target.closest('.wk-dot[data-qty]');
     if (!dot) return;
     showTrackerToast(dot.dataset.name, dot.dataset.week, dot.dataset.year, Number(dot.dataset.qty), dot.dataset.code);
@@ -1580,5 +1585,6 @@ window.addEventListener('blur', saveData);
 loadData();
 loadTrackerDb();
 </script>
+</div><!-- /container -->
 </body>
 </html>
