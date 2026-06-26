@@ -52,6 +52,7 @@
         .tab-settings { flex: 0 0 auto; padding: 10px 14px; font-size: 16px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        #historie-tab.active { display: flex; flex-direction: column; }
 
         /* Upload / instellingen */
         .upload-section {
@@ -174,7 +175,8 @@
 
         /* Genus lijst */
         #hist-genus-list {
-            flex: 1; overflow-y: auto;
+            max-height: 55vh;
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 8px;
         }
@@ -442,9 +444,7 @@
             <input type="file" id="file-xlsx-extra" accept=".xlsx" multiple style="display:none;" onchange="importXlsx(this.files); this.value=''">
         </div>
     </div>
-</div>
 
-<!-- ── HISTORIE TAB (volledig scherm, donker) ── -->
 <div id="historie-tab" class="tab-content">
     <!-- Zoekscherm genus -->
     <div id="hist-screen-zoek" style="display:flex;flex-direction:column;">
@@ -466,9 +466,37 @@
             <p>Nog geen verloopdata.<br>Upload een weeklijst via ⚙️ Instellingen.</p>
         </div>
     </div>
+
+    <!-- Detail scherm (binnen tab) -->
+    <div id="hist-detail">
+        <div class="detail-hdr">
+            <button class="detail-hdr-back" id="btn-detail-back">‹</button>
+            <div style="flex:1;">
+                <div class="detail-hdr-sub">Geslacht</div>
+                <div class="detail-hdr-title" id="detail-genus-name">—</div>
+            </div>
+        </div>
+        <div class="yr-tabs" id="yr-tabs"></div>
+        <div class="detail-search-wrap">
+            <input id="detail-zoek" type="search" placeholder="Soort / cultivar zoeken…" autocomplete="off" autocorrect="off" spellcheck="false">
+        </div>
+        <div class="legend-strip">
+            <div class="ls-item"><div class="ls-dot" style="background:#ef4444"></div>&lt;100</div>
+            <div class="ls-item"><div class="ls-dot" style="background:#f97316"></div>100–250</div>
+            <div class="ls-item"><div class="ls-dot" style="background:#facc15"></div>250–500</div>
+            <div class="ls-item"><div class="ls-dot" style="background:#4ade80"></div>500–1k</div>
+            <div class="ls-item"><div class="ls-dot" style="background:#166534"></div>&gt;1k</div>
+            <div class="ls-item" style="margin-left:auto;font-size:10px;color:#5a9a5a;" id="week-range-label"></div>
+        </div>
+        <div class="week-hdr" id="week-hdr">
+            <div class="wh-plant">Plant</div>
+            <div class="wh-weeks" id="wh-weeks"></div>
+        </div>
+        <div id="plant-list"></div>
+    </div>
 </div>
 
-
+</div>
 
 <!-- Tracker toast -->
 <div id="tracker-toast">
